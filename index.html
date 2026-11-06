@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Signa - Real-Time Sign Language Translation</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      try {
+        let t = localStorage.getItem("signa_theme") || "system";
+        if (typeof t === "string" && t.startsWith('"') && t.endsWith('"')) {
+          try { t = JSON.parse(t); } catch (_) { t = t.replace(/^"|"$/g, ""); }
+        }
+        const isLight = t === "light" || (t === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        if (isLight) document.documentElement.dataset.theme = "light";
+        else document.documentElement.removeAttribute("data-theme");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="ambient-glow ambient-top"></div>
+  <div class="ambient-glow ambient-bottom"></div>
+
+  <!-- Apple Navigation Bar -->
+  <header class="nav-header">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="nav-logo-mark">S</div>
+        <span class="nav-title">Signa</span>
+      </a>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <a href="index.html" class="nav-tab-link active">Translate</a>
+        <a href="train.html" class="nav-tab-link">Train</a>
+        <a href="analyze.html" class="nav-tab-link">Analyze</a>
+        <a href="vocabulary.html" class="nav-tab-link">Vocabulary</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="btnThemeToggle" class="btn-icon" title="Toggle Theme">🌓</button>
+        <button id="btnSettingsOpen" class="btn-apple btn-glass" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">⚙️ Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Main: Pure Minimalist Translation Screen -->
+  <main class="page-main">
+    
+    <!-- Camera Stage Viewport -->
+    <div class="translate-stage-wrapper mirror" id="stageContainer">
+      <video id="video" playsinline webkit-playsinline muted autoplay></video>
+      <canvas id="canvasOverlay"></canvas>
+
+      <!-- Top Status Badge -->
+      <div class="camera-badge">
+        <span class="pulse-dot" id="pulseDot"></span>
+        <span id="cameraStatusText">Camera Ready</span>
+      </div>
+
+      <!-- Live Hand Detection Badge with 1-Click Swap Button -->
+      <div class="hand-side-badge">
+        <span id="handSideLabel">👋 Hand: None</span>
+        <button class="btn-flip-hands" id="btnQuickSwapHands" title="Click to swap Left and Right hand if reversed">⇄ Swap</button>
+      </div>
+
+      <!-- Floating Glass Bottom Dock (Contrast-Optimized for Dark & Light) -->
+      <div class="camera-dock">
+        <button id="btnToggleCamera" class="btn-apple btn-primary">Start Camera</button>
+        <button id="btnFlipCamera" class="btn-apple btn-glass" title="Switch Front/Rear camera on phones">📷 Flip Cam</button>
+        <button id="btnPauseCamera" class="btn-apple btn-glass">Pause</button>
+        <button id="btnSpeakNow" class="btn-apple btn-glass">🔊 Speak</button>
+        <button id="btnClearCurrent" class="btn-apple btn-glass">Reset</button>
+      </div>
+    </div>
+
+    <!-- Apple-Style Translation Glass Card -->
+    <section class="translate-card">
+      <div class="translate-eyebrow" id="engineBadge">Real-Time ASL Engine · Biomechanical AI</div>
+      <div class="translate-sentence" id="displaySentence">—</div>
+      <div class="translate-subtext" id="displaySubtext">Start camera and sign in view</div>
+
+      <div class="translate-footer">
+        <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Translate to:</span>
+        <div class="seg-pill-group" id="langSelector">
+          <button class="active" data-lang="en">English</button>
+          <button data-lang="hi">हिंदी</button>
+          <button data-lang="te">తెలుగు</button>
+          <button data-lang="ta">தமிழ்</button>
+          <button data-lang="es">Español</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sentence History Ribbon -->
+    <div class="sentence-history-ribbon">
+      <span style="font-weight: 600; color: var(--text-primary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.8px;">History:</span>
+      <div id="historyText">No signs detected yet.</div>
+      <div style="display: flex; gap: 4px;">
+        <button class="btn-apple btn-glass" id="btnCopyHistory" style="padding: 0.3rem 0.7rem; font-size: 0.75rem;">Copy</button>
+        <button class="btn-apple btn-glass" id="btnClearHistory" style="padding: 0.3rem 0.7rem; font-size: 0.75rem;">Clear</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Apple Settings Modal Dialog -->
+  <dialog class="apple-dialog" id="settingsModal">
+    <form method="dialog" id="settingsForm">
+      <h2 style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px;">Preferences &amp; Calibration</h2>
+
+      <label>
+        Theme Appearance (Auto Syncs with Windows / OS)
+        <select class="apple-select" id="cfgThemeSelect">
+          <option value="system">Windows / System Default</option>
+          <option value="dark">Dark Theme</option>
+          <option value="light">Light Theme</option>
+        </select>
+      </label>
+
+      <label style="flex-direction: row; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0;">
+        <span>Invert Left &amp; Right Hand Detection</span>
+        <input type="checkbox" id="cfgInvertHands">
+      </label>
+
+      <label>
+        Google Gemini API Key (stored in browser)
+        <input class="apple-input" id="cfgKey" type="password" placeholder="AIzaSy..." autocomplete="off">
+        <span style="font-size: 0.75rem; color: var(--text-tertiary);">
+          Free API key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener" style="color: var(--apple-blue);">Google AI Studio</a>.
+        </span>
+      </label>
+
+      <label>
+        Gemini Vision Model
+        <input class="apple-input" id="cfgModel" placeholder="gemini-2.5-flash">
+      </label>
+
+      <button type="button" class="btn-apple btn-glass" id="btnVerifyKey" style="width: 100%; justify-content: center;">
+        🔍 Test &amp; Find Available Gemini Models
+      </button>
+      <div id="keyVerificationStatus" style="font-size: 0.75rem; text-align: center;"></div>
+
+      <label>
+        Recognition Strictness (1.5 - 3.2, default 2.4)
+        <input class="apple-input" id="cfgStrict" type="number" step="0.1" min="1.0" max="3.5" value="2.4">
+      </label>
+
+      <label>
+        Speech Rate (0.5 - 2.0)
+        <input class="apple-input" id="cfgRate" type="number" step="0.1" min="0.5" max="2.0" value="1.0">
+      </label>
+
+      <label style="flex-direction: row; align-items: center; gap: 0.75rem; cursor: pointer;">
+        <input type="checkbox" id="cfgMute"> Mute Automatic Voice Synthesis
+      </label>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.65rem; margin-top: 1rem;">
+        <button value="cancel" class="btn-apple btn-glass">Cancel</button>
+        <button value="save" id="btnSaveConfig" class="btn-apple btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Core Scripts -->
+  <script src="core.js"></script>
+  <script src="asl-dictionary.js"></script>
+  <script src="asl-dataset.js"></script>
+  <script src="grammar.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

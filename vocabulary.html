@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Signa - 1,200+ ASL Vocabulary Bank &amp; Grammar Rules</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      try {
+        let t = localStorage.getItem("signa_theme") || "system";
+        if (typeof t === "string" && t.startsWith('"') && t.endsWith('"')) {
+          try { t = JSON.parse(t); } catch (_) { t = t.replace(/^"|"$/g, ""); }
+        }
+        const isLight = t === "light" || (t === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        if (isLight) document.documentElement.dataset.theme = "light";
+        else document.documentElement.removeAttribute("data-theme");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="ambient-glow ambient-top"></div>
+  <div class="ambient-glow ambient-bottom"></div>
+
+  <!-- Header -->
+  <header class="nav-header">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="nav-logo-mark">S</div>
+        <span class="nav-title">Signa</span>
+      </a>
+
+      <nav class="nav-tabs">
+        <a href="index.html" class="nav-tab-link">Translate</a>
+        <a href="train.html" class="nav-tab-link">Train</a>
+        <a href="analyze.html" class="nav-tab-link">Analyze</a>
+        <a href="vocabulary.html" class="nav-tab-link active">Vocabulary</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="btnThemeToggle" class="btn-icon" title="Toggle Theme">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="panel-heading">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px;">1,200+ ASL Vocabulary Bank &amp; Grammar</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+          Explore the dictionary of 1,200+ signs, multi-language mappings, and smart sentence synthesis rules.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <button class="btn-apple btn-primary" id="btnOpenAddSignModal">➕ Add Custom Word</button>
+        <span class="apple-chip" style="font-size: 0.82rem; padding: 0.45rem 1rem;" id="totalCountBadge">1,200+ Signs Active</span>
+      </div>
+    </div>
+
+    <!-- Smart Grammar Rules Banner -->
+    <section class="glass-panel" style="padding: 1.25rem 1.75rem;">
+      <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--apple-blue); margin-bottom: 0.4rem;">
+        Smart ASL Sentence Synthesis Rules
+      </div>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">
+        ASL uses topic-comment structures. Signa automatically converts sequence glosses into natural spoken sentences:
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-top: 0.85rem;">
+        <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--glass-border-subtle);">
+          <span style="color: var(--apple-green); font-weight: 600;">NAME + SOHEL</span>
+          <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 2px;">→ "My name is Sohel."</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--glass-border-subtle);">
+          <span style="color: var(--apple-green); font-weight: 600;">WANT + WATER</span>
+          <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 2px;">→ "I want water, please."</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--glass-border-subtle);">
+          <span style="color: var(--apple-green); font-weight: 600;">YOU + NAME + WHAT</span>
+          <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 2px;">→ "What is your name?"</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--glass-border-subtle);">
+          <span style="color: var(--apple-green); font-weight: 600;">NEED + HELP</span>
+          <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 2px;">→ "I need help right now."</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search & Filter Controls -->
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <input class="apple-input" id="searchVocabInput" placeholder="🔍 Search 1,200+ signs (English, Hindi, Telugu, Tamil, Spanish)..." style="max-width: 420px;">
+      <div class="seg-pill-group" id="categoryFilter" style="overflow-x: auto; max-width: 100%;">
+        <button class="active" data-cat="all">All</button>
+        <button data-cat="Alphabet">Alphabet</button>
+        <button data-cat="Numbers">Numbers</button>
+        <button data-cat="Greetings">Greetings</button>
+        <button data-cat="Pronouns & Names">Pronouns</button>
+        <button data-cat="Actions & Verbs">Verbs</button>
+        <button data-cat="Questions">Questions</button>
+        <button data-cat="Food & Drink">Food</button>
+        <button data-cat="Family & People">Family</button>
+        <button data-cat="Health & Emergency">Health</button>
+      </div>
+    </div>
+
+    <!-- 1,200+ Vocabulary Table -->
+    <div class="vocab-table-container">
+      <table class="apple-table" id="vocabTable">
+        <thead>
+          <tr>
+            <th style="width: 160px;">ASL Sign (English)</th>
+            <th style="width: 140px;">Category</th>
+            <th>Hindi (हिंदी)</th>
+            <th>Telugu (తెలుగు)</th>
+            <th>Tamil (தமிழ்)</th>
+            <th>Spanish (Español)</th>
+            <th style="width: 110px; text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vocabTableBody">
+          <!-- Populated by vocab-app.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Add Custom Word Modal -->
+    <dialog class="apple-dialog" id="addWordModal">
+      <form method="dialog" id="formAddWord">
+        <h2 style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px;">Add New ASL Sign to Vocabulary</h2>
+        
+        <label>
+          Sign Word (English):
+          <input class="apple-input" id="newWordEn" placeholder="e.g. Sohel, College, Water" required>
+        </label>
+
+        <label>
+          Category:
+          <select class="apple-select" id="newWordCat">
+            <option value="Pronouns & Names">Pronouns &amp; Names</option>
+            <option value="Actions & Verbs">Actions &amp; Verbs</option>
+            <option value="Greetings">Greetings</option>
+            <option value="Questions">Questions</option>
+            <option value="Food & Drink">Food &amp; Drink</option>
+            <option value="Family & People">Family &amp; People</option>
+            <option value="Health & Emergency">Health &amp; Emergency</option>
+            <option value="Places & Travel">Places &amp; Travel</option>
+            <option value="School & Work">School &amp; Work</option>
+            <option value="Technology & Media">Technology &amp; Media</option>
+            <option value="General & Conversational">General &amp; Conversational</option>
+          </select>
+        </label>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <label>
+            Hindi (हिंदी):
+            <input class="apple-input" id="newWordHi" placeholder="वैकल्पिक">
+          </label>
+          <label>
+            Telugu (తెలుగు):
+            <input class="apple-input" id="newWordTe" placeholder="ఐచ్ఛికం">
+          </label>
+          <label>
+            Tamil (தமிழ்):
+            <input class="apple-input" id="newWordTa" placeholder="விருப்பத்தேர்வு">
+          </label>
+          <label>
+            Spanish (Español):
+            <input class="apple-input" id="newWordEs" placeholder="Opcional">
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.65rem; margin-top: 1rem;">
+          <button value="cancel" class="btn-apple btn-glass">Cancel</button>
+          <button value="save" id="btnSaveNewWord" class="btn-apple btn-primary">Save to Vocabulary</button>
+        </div>
+      </form>
+    </dialog>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="core.js"></script>
+  <script src="asl-dictionary.js"></script>
+  <script src="asl-dataset.js"></script>
+  <script src="vocab-app.js"></script>
+</body>
+</html>

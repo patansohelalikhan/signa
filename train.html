@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Signa - Train ASL Gesture Models</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Immediate theme synchronizer prevents flash -->
+  <script>
+    (function () {
+      try {
+        let t = localStorage.getItem("signa_theme") || "system";
+        if (typeof t === "string" && t.startsWith('"') && t.endsWith('"')) {
+          try { t = JSON.parse(t); } catch (_) { t = t.replace(/^"|"$/g, ""); }
+        }
+        const isLight = t === "light" || (t === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        if (isLight) document.documentElement.dataset.theme = "light";
+        else document.documentElement.removeAttribute("data-theme");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="ambient-glow ambient-top"></div>
+  <div class="ambient-glow ambient-bottom"></div>
+
+  <!-- Header -->
+  <header class="nav-header">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="nav-logo-mark">S</div>
+        <span class="nav-title">Signa</span>
+      </a>
+
+      <nav class="nav-tabs">
+        <a href="index.html" class="nav-tab-link">Translate</a>
+        <a href="train.html" class="nav-tab-link active">Train</a>
+        <a href="analyze.html" class="nav-tab-link">Analyze</a>
+        <a href="vocabulary.html" class="nav-tab-link">Vocabulary</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="btnThemeToggle" class="btn-icon" title="Toggle Theme">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Training Studio -->
+  <main class="page-main">
+    <div class="panel-heading" style="margin-bottom: 0.5rem;">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px;">Gesture Training Studio</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+          Record custom gestures or train words from the 1,200-word ASL dictionary with multi-shot bursts.
+        </p>
+      </div>
+      <button id="btnToggleCamera" class="btn-apple btn-primary">Start Studio Camera</button>
+    </div>
+
+    <div class="train-studio-grid">
+      <!-- Left Column: Studio Camera Feed -->
+      <div class="glass-panel" style="padding: 1rem;">
+        <div class="studio-video-box mirror" id="stageContainer">
+          <video id="video" playsinline webkit-playsinline muted autoplay></video>
+          <canvas id="canvasOverlay"></canvas>
+          <!-- Countdown Overlay (Only active during recording) -->
+          <div id="countdownOverlay">3</div>
+
+          <div class="camera-badge">
+            <span class="pulse-dot" id="pulseDot"></span>
+            <span id="cameraStatusText">Camera Ready</span>
+          </div>
+
+          <!-- Hand Telemetry Badge with Swap -->
+          <div class="hand-side-badge">
+            <span id="detectedHandBadge">👋 Hand: None</span>
+            <button class="btn-flip-hands" id="btnQuickSwapHands" title="Swap Left/Right hand">⇄ Swap</button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn-apple btn-glass" id="btnFlipCamStudio" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">📷 Flip Cam</button>
+            <span style="font-size: 0.8rem; color: var(--text-tertiary);" id="fpsCount">0 FPS</span>
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="chkSkeleton" checked> AI Skeleton
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Training Console -->
+      <div class="glass-panel">
+        <div class="panel-title">Sign Configuration</div>
+        
+        <label style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">Target Sign or Word Name:</span>
+          <input class="apple-input" id="trainSignInput" placeholder="e.g. Sohel, Hello, Water, A, B..." maxlength="40">
+        </label>
+
+        <!-- Category Filter & 1,200 Word Cloud -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <span style="font-size: 0.78rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;">
+              Vocabulary Bank (1,200+ Words):
+            </span>
+            <select id="trainCatFilter" style="background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); font-size: 0.75rem; padding: 2px 6px;">
+              <!-- Populated by train-app.js -->
+            </select>
+          </div>
+          <div class="chip-cloud" id="quickWordChips"></div>
+        </div>
+
+        <!-- Record Button -->
+        <button class="btn-apple btn-primary" id="btnRecordBurst" style="justify-content: center; padding: 0.85rem; font-size: 1rem; background: var(--apple-red); box-shadow: 0 4px 16px rgba(255, 69, 58, 0.4);">
+          🔴 Record Gesture (3s Countdown)
+        </button>
+
+        <!-- Recorded Takes for this sign -->
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Recorded Takes for Active Sign</span>
+            <span style="font-size: 0.75rem; color: var(--apple-blue); font-weight: 600;" id="takeCountBadge">0 takes</span>
+          </div>
+          <div id="takesList" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+            <div style="font-size: 0.8rem; color: var(--text-tertiary);">No takes recorded yet for this sign. Record 2-3 takes from slightly varied angles for best accuracy.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="core.js"></script>
+  <script src="asl-dictionary.js"></script>
+  <script src="asl-dataset.js"></script>
+  <script src="grammar.js"></script>
+  <script src="train-app.js"></script>
+</body>
+</html>

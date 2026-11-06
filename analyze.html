@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Signa - Model Analysis, Pictorial Tracking &amp; Graphs</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      try {
+        let t = localStorage.getItem("signa_theme") || "system";
+        if (typeof t === "string" && t.startsWith('"') && t.endsWith('"')) {
+          try { t = JSON.parse(t); } catch (_) { t = t.replace(/^"|"$/g, ""); }
+        }
+        const isLight = t === "light" || (t === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        if (isLight) document.documentElement.dataset.theme = "light";
+        else document.documentElement.removeAttribute("data-theme");
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="ambient-glow ambient-top"></div>
+  <div class="ambient-glow ambient-bottom"></div>
+
+  <!-- Header -->
+  <header class="nav-header">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <div class="nav-logo-mark">S</div>
+        <span class="nav-title">Signa</span>
+      </a>
+
+      <nav class="nav-tabs">
+        <a href="index.html" class="nav-tab-link">Translate</a>
+        <a href="train.html" class="nav-tab-link">Train</a>
+        <a href="analyze.html" class="nav-tab-link active">Analyze</a>
+        <a href="vocabulary.html" class="nav-tab-link">Vocabulary</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="btnThemeToggle" class="btn-icon" title="Toggle Theme">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="panel-heading">
+      <div>
+        <h1 style="font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px;">Biomechanical Tracking &amp; Accuracy Graphs</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
+          Live anatomical skeletal visualizer, real-time streaming confidence graph, and category-level accuracy analytics.
+        </p>
+      </div>
+      <button id="btnToggleAnalyzeCam" class="btn-apple btn-primary">Start Live Telemetry</button>
+    </div>
+
+    <!-- Hidden Video element for analysis telemetry -->
+    <video id="analyzeVideo" playsinline webkit-playsinline muted autoplay style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;"></video>
+
+    <!-- Top Analysis Grid: Pictorial Hand Telemetry + Metrics Ring -->
+    <div class="analyze-grid">
+      <!-- Left Panel: Pictorial Visualization of Model Tracking -->
+      <div class="glass-panel">
+        <div class="panel-heading">
+          <span class="panel-title">Pictorial Biomechanical Tracking</span>
+          <span id="trackingStatusBadge" style="font-size: 0.75rem; font-weight: 600; color: var(--apple-green);">Idle</span>
+        </div>
+
+        <!-- Interactive Anatomical Hand Diagram -->
+        <div class="hand-visualizer-container">
+          <svg id="handSvgVisualizer" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <g id="svgBonesGroup" stroke="rgba(41, 151, 255, 0.7)" stroke-width="3" stroke-linecap="round"></g>
+            <g id="svgJointsGroup"></g>
+          </svg>
+        </div>
+
+        <!-- 5 Finger Extension Gauges -->
+        <div class="finger-gauges-list">
+          <div class="finger-row">
+            <span class="finger-name">Thumb</span>
+            <div class="gauge-track"><div id="gaugeThumb" class="gauge-bar"></div></div>
+            <span class="gauge-val" id="valThumb">0%</span>
+          </div>
+          <div class="finger-row">
+            <span class="finger-name">Index</span>
+            <div class="gauge-track"><div id="gaugeIndex" class="gauge-bar"></div></div>
+            <span class="gauge-val" id="valIndex">0%</span>
+          </div>
+          <div class="finger-row">
+            <span class="finger-name">Middle</span>
+            <div class="gauge-track"><div id="gaugeMiddle" class="gauge-bar"></div></div>
+            <span class="gauge-val" id="valMiddle">0%</span>
+          </div>
+          <div class="finger-row">
+            <span class="finger-name">Ring</span>
+            <div class="gauge-track"><div id="gaugeRing" class="gauge-bar"></div></div>
+            <span class="gauge-val" id="valRing">0%</span>
+          </div>
+          <div class="finger-row">
+            <span class="finger-name">Pinky</span>
+            <div class="gauge-track"><div id="gaugePinky" class="gauge-bar"></div></div>
+            <span class="gauge-val" id="valPinky">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Dataset Metrics & Health -->
+      <div class="glass-panel">
+        <div class="panel-heading">
+          <span class="panel-title">Model Accuracy &amp; Dataset Health</span>
+        </div>
+
+        <!-- Accuracy Ring Card -->
+        <div class="metrics-ring-card">
+          <div class="ring-stat-large" id="accMetricBig">—</div>
+          <div>
+            <div style="font-weight: 600; font-size: 1rem;">Cross-Validation Consistency</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;" id="accMetricDesc">
+              Leave-one-out validation measures whether your recorded takes discriminate clearly against other signs.
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem;">
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border-subtle);">
+            <div style="color: var(--text-tertiary);">Total Vocabulary Bank</div>
+            <div style="font-size: 1.25rem; font-weight: 700; margin-top: 2px;" id="statTotalVocab">1,200+ Signs</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border-subtle);">
+            <div style="color: var(--text-tertiary);">Trained Signs in DB</div>
+            <div style="font-size: 1.25rem; font-weight: 700; margin-top: 2px;" id="statTrainedSigns">0</div>
+          </div>
+        </div>
+
+        <!-- Confused sign pairs -->
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">
+            Confusion Analysis:
+          </div>
+          <div id="confusedPairsList" style="font-size: 0.8rem; color: var(--text-tertiary);">
+            No conflicting gesture pairs detected.
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 0.65rem; margin-top: auto; flex-wrap: wrap;">
+          <button class="btn-apple btn-glass" id="btnExportJson">💾 Export Dataset</button>
+          <button class="btn-apple btn-glass" id="btnImportJson">📂 Import Dataset</button>
+          <input type="file" id="fileImportInput" accept=".json" hidden>
+          <button class="btn-apple btn-glass" id="btnResetToDefaults" style="color: var(--apple-red);">Reset Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accuracy Analytics Graphs Section -->
+    <div class="charts-grid">
+      <!-- Graph 1: Category Accuracy Bar Chart -->
+      <div class="chart-box">
+        <div class="panel-heading">
+          <span class="chart-title">Accuracy by Vocabulary Category</span>
+          <span style="font-size: 0.75rem; color: var(--apple-blue); font-weight: 600;">Cross-Validation %</span>
+        </div>
+        <canvas class="chart-canvas" id="canvasCategoryChart"></canvas>
+      </div>
+
+      <!-- Graph 2: Real-Time Live Confidence Stream Graph -->
+      <div class="chart-box">
+        <div class="panel-heading">
+          <span class="chart-title">Live Prediction Confidence Stream</span>
+          <span style="font-size: 0.75rem; color: var(--apple-green); font-weight: 600;" id="liveConfidenceVal">0% Confidence</span>
+        </div>
+        <canvas class="chart-canvas" id="canvasStreamChart"></canvas>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="core.js"></script>
+  <script src="asl-dictionary.js"></script>
+  <script src="asl-dataset.js"></script>
+  <script src="analyze-app.js"></script>
+</body>
+</html>
